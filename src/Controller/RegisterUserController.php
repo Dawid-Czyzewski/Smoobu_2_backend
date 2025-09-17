@@ -1,0 +1,78 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\User;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpKernel\Attribute\AsController;
+
+#[AsController]
+class RegisterUserController extends AbstractController
+{
+    public function __construct(
+        private EntityManagerInterface $em,
+        private UserPasswordHasherInterface $passwordHasher,
+        private ValidatorInterface $validator
+    ) {}
+
+    public function __invoke(Request $request): JsonResponse
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $data = json_decode($request->getContent(), true);
+
+        if ($data === null) {
+            return new JsonResponse(['error' => 'Invalid JSON'], 400);
+        }
+
+        $constraints = new Assert\Collection([
+            'username' => [new Assert\NotBlank(), new Assert\Length(['min' => 3])],
+            'email' => [new Assert\NotBlank(), new Assert\Email()],
+            'password' => [new Assert\NotBlank(), new Assert\Length(['min' => 6])],
+            'name' => [new Assert\NotBlank()],
+            'surname' => [new Assert\NotBlank()],
+            'phone' => [new Assert\Optional([new Assert\Length(['max' => 12])])],
+            'roles' => [new Assert\Optional([
+                new Assert\Type('array'),
+                new Assert\All([new Assert\Type('string')])
+            ])]
+        ]);
+
+        $errors = $this->validator->validate($data, $constraints);
+
+        if (count($errors) > 0) {
+            $errorMessages = [];
+            foreach ($errors as $error) {
+                $errorMessages[] = $error->getPropertyPath() . ': ' . $error->getMessage();
+            }
+            return new JsonResponse(['errors' => $errorMessages], 400);
+        }
+
+        $user = new User();
+        $user->setUsername($data['username']);
+        $user->setEmail($data['email']);
+        $user->setName($data['name']);
+        $user->setSurname($data['surname']);
+        $user->setPhone($data['phone'] ?? null);
+        $user->setCreatedAt(new \DateTimeImmutable());
+
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
+        $user->setPassword($hashedPassword);
+
+        $roles = $data['roles'] ?? ['ROLE_USER'];
+        $user->setRoles($roles);
+
+        $this->em->persist($user);
+        $this->em->flush();
+
+        return new JsonResponse([
+            'message' => 'User created successfully',
+            'user_id' => $user->getId()
+        ], 201);
+    }
+}
