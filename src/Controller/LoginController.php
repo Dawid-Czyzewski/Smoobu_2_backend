@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\RefreshToken;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -10,6 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Uid\Uuid;
 
 class LoginController extends AbstractController
 {
@@ -35,8 +37,19 @@ class LoginController extends AbstractController
             return new JsonResponse(['error' => 'Invalid credentials'], JsonResponse::HTTP_UNAUTHORIZED);
         }
 
-        $token = $jwtManager->create($user);
+        $accessToken = $jwtManager->create($user);
 
-        return new JsonResponse(['token' => $token]);
+        $refreshToken = new RefreshToken();
+        $refreshToken->setRefreshToken(Uuid::v4());
+        $refreshToken->setUsername($user->getUserIdentifier());
+        $refreshToken->setValid((new \DateTime())->modify('+30 days'));
+
+        $em->persist($refreshToken);
+        $em->flush();
+
+        return new JsonResponse([
+            'token' => $accessToken,
+            'refresh_token' => $refreshToken->getRefreshToken(),
+        ]);
     }
 }
