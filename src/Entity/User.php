@@ -9,6 +9,7 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use App\Controller\RegisterUserController;
+use App\State\MeProvider;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -25,7 +26,16 @@ use Symfony\Component\Serializer\Annotation\Groups;
             uriTemplate: "/me",
             security: "is_granted('ROLE_USER')",
             securityMessage: "You must be authenticated to access your profile.",
-            normalizationContext: ['groups' => ['user:me']]
+            normalizationContext: ['groups' => ['user:me']],
+            provider: MeProvider::class
+        ),
+        new GetCollection(
+            uriTemplate: "/users",
+            security: "is_granted('ROLE_ADMIN')",
+            securityMessage: "You need administrator privileges to access users list.",
+            normalizationContext: ['groups' => ['user:list']],
+            paginationEnabled: true,
+            paginationItemsPerPage: 10
         )
     ]
 )]
@@ -34,7 +44,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:me'])]
+    #[Groups(['user:me', 'user:list'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
@@ -56,18 +66,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?\DateTimeImmutable $created_at = null;
 
     #[ORM\Column(length: 100)]
-    #[Groups(['user:me'])]
+    #[Groups(['user:me', 'user:list'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 150)]
-    #[Groups(['user:me'])]
+    #[Groups(['user:me', 'user:list'])]
     private ?string $surname = null;
 
-    #[ORM\Column(length: 12, nullable: true)]
+    #[ORM\Column(length: 20, nullable: true)]
     private ?string $phone = null;
 
     #[ORM\Column(length: 180)]
-    #[Groups(['user:me'])]
+    #[Groups(['user:me', 'user:list'])]
     private ?string $email = null;
 
     public function getId(): ?int
@@ -100,7 +110,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @see UserInterface
      */
-    #[Groups(['user:me'])]
+    #[Groups(['user:me', 'user:list'])]
     public function getRoles(): array
     {
         $roles = $this->roles;
@@ -152,10 +162,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         // @deprecated, to be removed when upgrading to Symfony 8
     }
 
+    #[Groups(['user:list'])]
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->created_at;
     }
+
 
     public function setCreatedAt(\DateTimeImmutable $created_at): static
     {

@@ -5,6 +5,8 @@ api_platform:
         stateless: false
         cache_headers:
             vary: ['Content-Type', 'Authorization', 'Origin']
+        pagination_items_per_page: 10
+        pagination_maximum_items_per_page: 50
     enable_docs: true
     enable_swagger_ui: true
     enable_re_doc: true

@@ -36,7 +36,12 @@ class RegisterUserController extends AbstractController
             'password' => [new Assert\NotBlank(), new Assert\Length(['min' => 6])],
             'name' => [new Assert\NotBlank()],
             'surname' => [new Assert\NotBlank()],
-            'phone' => [new Assert\Optional([new Assert\Length(['max' => 12])])],
+            'phone' => [new Assert\Optional([
+                new Assert\Regex([
+                    'pattern' => '/^\+[1-9]\d{1,14}$/',
+                    'message' => 'Phone number must start with + and country code (e.g., +48123456789)'
+                ])
+            ])],
             'roles' => [new Assert\Optional([
                 new Assert\Type('array'),
                 new Assert\All([new Assert\Type('string')])
@@ -72,7 +77,16 @@ class RegisterUserController extends AbstractController
 
         return new JsonResponse([
             'message' => 'User created successfully',
-            'user_id' => $user->getId()
+            'user' => [
+                'id' => $user->getId(),
+                'username' => $user->getUsername(),
+                'email' => $user->getEmail(),
+                'name' => $user->getName(),
+                'surname' => $user->getSurname(),
+                'phone' => $user->getPhone(),
+                'roles' => $user->getRoles(),
+                'created_at' => $user->getCreatedAt()->format('Y-m-d H:i:s')
+            ]
         ], 201);
     }
 }
