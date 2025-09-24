@@ -6,9 +6,12 @@ use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Controller\RegisterUserController;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
@@ -17,6 +20,12 @@ use Symfony\Component\Security\Core\User\UserInterface;
         new Post(
             uriTemplate: "/users/register",
             controller: RegisterUserController::class
+        ),
+        new Get(
+            uriTemplate: "/me",
+            security: "is_granted('ROLE_USER')",
+            securityMessage: "You must be authenticated to access your profile.",
+            normalizationContext: ['groups' => ['user:me']]
         )
     ]
 )]
@@ -25,6 +34,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['user:me'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
@@ -46,15 +56,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?\DateTimeImmutable $created_at = null;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['user:me'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 150)]
+    #[Groups(['user:me'])]
     private ?string $surname = null;
 
     #[ORM\Column(length: 12, nullable: true)]
     private ?string $phone = null;
 
     #[ORM\Column(length: 180)]
+    #[Groups(['user:me'])]
     private ?string $email = null;
 
     public function getId(): ?int
@@ -87,6 +100,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @see UserInterface
      */
+    #[Groups(['user:me'])]
     public function getRoles(): array
     {
         $roles = $this->roles;

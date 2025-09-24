@@ -25,6 +25,7 @@ security:
             stateless: false
             jwt: ~
         main:
+            pattern: ^/(?!api)
             lazy: true
             stateless: false
             provider: app_user_provider
@@ -32,7 +33,12 @@ security:
         api:
             pattern: ^/api
             stateless: false
+            provider: app_user_provider
             jwt: ~
+            refresh_jwt:
+                check_path: /api/token/refresh
+                success_handler: App\Security\RefreshTokenSuccessHandler
+            entry_point: jwt
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
@@ -44,6 +50,7 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/token/refresh, roles: PUBLIC_ACCESS }
         - { path: ^/api/, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:

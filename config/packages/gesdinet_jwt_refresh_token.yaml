@@ -1,4 +1,10 @@
 gesdinet_jwt_refresh_token:
-  refresh_token_class: App\Entity\RefreshToken
-  ttl: 100
-  firewall: api
+    refresh_token_class: App\Entity\RefreshToken
+    manager_type: orm
+    object_manager: doctrine.orm.default_entity_manager
+    ttl: 2592000 # 30 days
+    token_parameter_name: refresh_token
+    single_use: true
+    return_expiration: true
+
+

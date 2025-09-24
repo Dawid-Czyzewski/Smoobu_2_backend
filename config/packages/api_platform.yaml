@@ -9,6 +9,11 @@ api_platform:
     enable_swagger_ui: true
     enable_re_doc: true
     description: 'Smoobu 2.0 API'
+    formats:
+        json:
+            mime_types: ['application/json']
+        jsonld:
+            mime_types: ['application/ld+json']
     swagger:
         api_keys:
             JWT:

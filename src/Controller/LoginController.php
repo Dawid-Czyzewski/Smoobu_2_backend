@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Entity\RefreshToken;
+use App\Service\CustomTokenGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,7 +21,8 @@ class LoginController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         UserPasswordHasherInterface $passwordHasher,
-        JWTTokenManagerInterface $jwtManager
+        JWTTokenManagerInterface $jwtManager,
+        CustomTokenGenerator $tokenGenerator
     ): JsonResponse {
         $data = json_decode($request->getContent(), true) ?: [];
         $username = $data['username'] ?? null;
@@ -40,9 +42,9 @@ class LoginController extends AbstractController
         $accessToken = $jwtManager->create($user);
 
         $refreshToken = new RefreshToken();
-        $refreshToken->setRefreshToken(Uuid::v4());
+        $refreshToken->setRefreshToken($tokenGenerator->generateLongRefreshToken(128));
         $refreshToken->setUsername($user->getUserIdentifier());
-        $refreshToken->setValid((new \DateTime())->modify('+30 days'));
+        $refreshToken->setValid(new \DateTime('+30 days'));
 
         $em->persist($refreshToken);
         $em->flush();
