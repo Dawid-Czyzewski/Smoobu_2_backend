@@ -28,3 +28,11 @@ services:
         arguments:
             $fromEmail: 'extranet@yourspain.es'
             $fromName: 'Extranet System'
+    
+    Intervention\Image\ImageManager:
+        arguments:
+            - '@Intervention\Image\Drivers\Gd\Driver'
+    
+    Intervention\Image\Drivers\Gd\Driver:
+        class: Intervention\Image\Drivers\Gd\Driver
+    

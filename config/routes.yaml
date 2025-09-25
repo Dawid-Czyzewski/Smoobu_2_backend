@@ -6,3 +6,8 @@ controllers:
 
 api_login_check:
     path: /api/login
+
+upload_apartment_image:
+    path: /api/apartments/upload-image
+    controller: App\Controller\UploadApartmentImageController
+    methods: [POST]

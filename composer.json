@@ -14,6 +14,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.4.2",
         "doctrine/orm": "^3.5.2",
         "gesdinet/jwt-refresh-token-bundle": "2.x-dev",
+        "intervention/image": "^3.11",
         "lexik/jwt-authentication-bundle": "^3.1.1",
         "phpdocumentor/reflection-docblock": "^5.6.3",
         "phpstan/phpdoc-parser": "^2.3",
