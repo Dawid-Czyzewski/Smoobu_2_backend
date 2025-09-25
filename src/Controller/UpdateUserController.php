@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\InvoiceInfo;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -56,7 +57,10 @@ class UpdateUserController extends AbstractController
             'password' => [new Assert\Optional([
                 new Assert\Length(['min' => 6, 'max' => 4096])
             ])],
-            'confirmPassword' => [new Assert\Optional()]
+            'confirmPassword' => [new Assert\Optional()],
+            'invoiceInfo' => [new Assert\Optional([
+                new Assert\Type('array')
+            ])]
         ]);
 
         $errors = $this->validator->validate($data, $constraints);
@@ -69,21 +73,18 @@ class UpdateUserController extends AbstractController
             return new JsonResponse(['errors' => $errorMessages], 400);
         }
 
-        // Validate password if provided
         if (isset($data['password']) && !empty($data['password'])) {
             if (!isset($data['confirmPassword']) || $data['password'] !== $data['confirmPassword']) {
                 return new JsonResponse(['error' => 'Password and confirm password do not match'], 400);
             }
         }
 
-        // Check if username is available (excluding current user)
         if ($data['username'] !== $user->getUsername()) {
             if (!$this->userRepository->isUsernameAvailable($data['username'], $id)) {
                 return new JsonResponse(['error' => 'Username is already taken'], 400);
             }
         }
 
-        // Update user data
         $user->setName($data['name']);
         $user->setSurname($data['surname']);
         $user->setEmail($data['email']);
@@ -94,10 +95,48 @@ class UpdateUserController extends AbstractController
             $user->setRoles($data['roles']);
         }
 
-        // Update password if provided
         if (isset($data['password']) && !empty($data['password'])) {
             $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
             $user->setPassword($hashedPassword);
+        }
+
+        if (isset($data['invoiceInfo'])) {
+            $invoiceData = $data['invoiceInfo'];
+            $invoiceInfo = $user->getInvoiceInfo();
+            
+            $hasAnyInvoiceData = !empty($invoiceData['country']) || 
+                               !empty($invoiceData['city']) || 
+                               !empty($invoiceData['companyName']) || 
+                               !empty($invoiceData['nip']) || 
+                               !empty($invoiceData['address']) || 
+                               !empty($invoiceData['email']);
+            
+            error_log('Invoice data check: ' . json_encode($invoiceData));
+            error_log('Has any invoice data: ' . ($hasAnyInvoiceData ? 'true' : 'false'));
+            
+            if ($hasAnyInvoiceData) {
+                if ($invoiceInfo === null) {
+                    $invoiceInfo = new InvoiceInfo();
+                    $invoiceInfo->setUser($user);
+                }
+                
+                $invoiceInfo->setCountry(!empty($invoiceData['country']) ? $invoiceData['country'] : null);
+                $invoiceInfo->setCity(!empty($invoiceData['city']) ? $invoiceData['city'] : null);
+                $invoiceInfo->setCompanyName(!empty($invoiceData['companyName']) ? $invoiceData['companyName'] : null);
+                $invoiceInfo->setNip(!empty($invoiceData['nip']) ? $invoiceData['nip'] : null);
+                $invoiceInfo->setAddress(!empty($invoiceData['address']) ? $invoiceData['address'] : null);
+                $invoiceInfo->setEmail(!empty($invoiceData['email']) ? $invoiceData['email'] : null);
+                
+                $this->em->persist($invoiceInfo);
+            } else {
+                if ($invoiceInfo !== null) {
+                    error_log('Removing invoice info for user: ' . $user->getId());
+                    $this->em->remove($invoiceInfo);
+                    $user->setInvoiceInfo(null);
+                } else {
+                    error_log('No invoice info to remove for user: ' . $user->getId());
+                }
+            }
         }
 
         $this->em->persist($user);

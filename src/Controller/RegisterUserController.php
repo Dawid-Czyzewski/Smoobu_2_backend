@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\InvoiceInfo;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -45,6 +46,9 @@ class RegisterUserController extends AbstractController
             'roles' => [new Assert\Optional([
                 new Assert\Type('array'),
                 new Assert\All([new Assert\Type('string')])
+            ])],
+            'invoiceInfo' => [new Assert\Optional([
+                new Assert\Type('array')
             ])]
         ]);
 
@@ -74,6 +78,31 @@ class RegisterUserController extends AbstractController
 
         $this->em->persist($user);
         $this->em->flush();
+
+        if (isset($data['invoiceInfo'])) {
+            $invoiceData = $data['invoiceInfo'];
+            
+            $hasAnyInvoiceData = !empty($invoiceData['country']) || 
+                               !empty($invoiceData['city']) || 
+                               !empty($invoiceData['companyName']) || 
+                               !empty($invoiceData['nip']) || 
+                               !empty($invoiceData['address']) || 
+                               !empty($invoiceData['email']);
+            
+            if ($hasAnyInvoiceData) {
+                $invoiceInfo = new InvoiceInfo();
+                $invoiceInfo->setUser($user);
+                $invoiceInfo->setCountry(!empty($invoiceData['country']) ? $invoiceData['country'] : null);
+                $invoiceInfo->setCity(!empty($invoiceData['city']) ? $invoiceData['city'] : null);
+                $invoiceInfo->setCompanyName(!empty($invoiceData['companyName']) ? $invoiceData['companyName'] : null);
+                $invoiceInfo->setNip(!empty($invoiceData['nip']) ? $invoiceData['nip'] : null);
+                $invoiceInfo->setAddress(!empty($invoiceData['address']) ? $invoiceData['address'] : null);
+                $invoiceInfo->setEmail(!empty($invoiceData['email']) ? $invoiceData['email'] : null);
+                
+                $this->em->persist($invoiceInfo);
+                $this->em->flush();
+            }
+        }
 
         return new JsonResponse([
             'message' => 'User created successfully',

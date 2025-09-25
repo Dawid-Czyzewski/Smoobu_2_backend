@@ -244,4 +244,28 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+
+    #[ORM\OneToOne(mappedBy: 'user', targetEntity: InvoiceInfo::class, cascade: ['persist', 'remove'])]
+    #[Groups(['user:details'])]
+    private ?InvoiceInfo $invoiceInfo = null;
+
+    public function getInvoiceInfo(): ?InvoiceInfo
+    {
+        return $this->invoiceInfo;
+    }
+
+    public function setInvoiceInfo(?InvoiceInfo $invoiceInfo): static
+    {
+        if ($invoiceInfo === null && $this->invoiceInfo !== null) {
+            $this->invoiceInfo->setUser(null);
+        }
+
+        if ($invoiceInfo !== null && $invoiceInfo->getUser() !== $this) {
+            $invoiceInfo->setUser($this);
+        }
+
+        $this->invoiceInfo = $invoiceInfo;
+
+        return $this;
+    }
 }

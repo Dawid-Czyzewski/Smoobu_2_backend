@@ -7,9 +7,6 @@ namespace DoctrineMigrations;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
-/**
- * Auto-generated Migration: Please modify to your needs!
- */
 final class Version20250925071522 extends AbstractMigration
 {
     public function getDescription(): string
@@ -19,7 +16,6 @@ final class Version20250925071522 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // this up() migration is auto-generated, please modify it to your needs
         
         // First, convert existing binary UUIDs to string format
         $this->addSql('UPDATE password_reset_tokens SET id = CONCAT(
@@ -36,7 +32,6 @@ final class Version20250925071522 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
-        // this down() migration is auto-generated, please modify it to your needs
         $this->addSql('ALTER TABLE password_reset_tokens CHANGE id id BINARY(16) NOT NULL COMMENT \'(DC2Type:uuid)\'');
     }
 }
