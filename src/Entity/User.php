@@ -30,6 +30,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
             normalizationContext: ['groups' => ['user:me']],
             provider: MeProvider::class
         ),
+        new Get(
+            uriTemplate: "/users/{id}",
+            security: "is_granted('ROLE_ADMIN')",
+            securityMessage: "You need administrator privileges to access user details.",
+            normalizationContext: ['groups' => ['user:details']]
+        ),
         new GetCollection(
             uriTemplate: "/users",
             security: "is_granted('ROLE_ADMIN')",
@@ -49,10 +55,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:me', 'user:list'])]
+    #[Groups(['user:me', 'user:list', 'user:details'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
+    #[Groups(['user:details'])]
     private ?string $username = null;
 
     /**
@@ -71,18 +78,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?\DateTimeImmutable $created_at = null;
 
     #[ORM\Column(length: 100)]
-    #[Groups(['user:me', 'user:list'])]
+    #[Groups(['user:me', 'user:list', 'user:details'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 150)]
-    #[Groups(['user:me', 'user:list'])]
+    #[Groups(['user:me', 'user:list', 'user:details'])]
     private ?string $surname = null;
 
     #[ORM\Column(length: 20, nullable: true)]
+    #[Groups(['user:details'])]
     private ?string $phone = null;
 
     #[ORM\Column(length: 180)]
-    #[Groups(['user:me', 'user:list'])]
+    #[Groups(['user:me', 'user:list', 'user:details'])]
     private ?string $email = null;
 
     public function getId(): ?int
@@ -115,7 +123,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @see UserInterface
      */
-    #[Groups(['user:me', 'user:list'])]
+    #[Groups(['user:me', 'user:list', 'user:details'])]
     public function getRoles(): array
     {
         $roles = $this->roles;
@@ -167,7 +175,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         // @deprecated, to be removed when upgrading to Symfony 8
     }
 
-    #[Groups(['user:list'])]
+    #[Groups(['user:list', 'user:details'])]
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->created_at;

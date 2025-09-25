@@ -16,7 +16,6 @@ class RefreshTokenController extends AbstractController
     #[Route('/api/token/refresh', name: 'api_token_refresh', methods: ['POST'])]
     public function refreshPlaceholder(): JsonResponse
     {
-        // This will only be reached if the refresh_jwt authenticator does not handle the request
         return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
     }
 }
