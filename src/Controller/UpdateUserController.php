@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 
@@ -18,7 +19,8 @@ class UpdateUserController extends AbstractController
     public function __construct(
         private EntityManagerInterface $em,
         private UserRepository $userRepository,
-        private ValidatorInterface $validator
+        private ValidatorInterface $validator,
+        private UserPasswordHasherInterface $passwordHasher
     ) {}
 
     public function __invoke(Request $request, int $id): JsonResponse
@@ -50,7 +52,11 @@ class UpdateUserController extends AbstractController
             'roles' => [new Assert\Optional([
                 new Assert\Type('array'),
                 new Assert\All([new Assert\Type('string')])
-            ])]
+            ])],
+            'password' => [new Assert\Optional([
+                new Assert\Length(['min' => 6, 'max' => 4096])
+            ])],
+            'confirmPassword' => [new Assert\Optional()]
         ]);
 
         $errors = $this->validator->validate($data, $constraints);
@@ -61,6 +67,13 @@ class UpdateUserController extends AbstractController
                 $errorMessages[] = $error->getPropertyPath() . ': ' . $error->getMessage();
             }
             return new JsonResponse(['errors' => $errorMessages], 400);
+        }
+
+        // Validate password if provided
+        if (isset($data['password']) && !empty($data['password'])) {
+            if (!isset($data['confirmPassword']) || $data['password'] !== $data['confirmPassword']) {
+                return new JsonResponse(['error' => 'Password and confirm password do not match'], 400);
+            }
         }
 
         // Check if username is available (excluding current user)
@@ -79,6 +92,12 @@ class UpdateUserController extends AbstractController
 
         if (isset($data['roles'])) {
             $user->setRoles($data['roles']);
+        }
+
+        // Update password if provided
+        if (isset($data['password']) && !empty($data['password'])) {
+            $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
+            $user->setPassword($hashedPassword);
         }
 
         $this->em->persist($user);
