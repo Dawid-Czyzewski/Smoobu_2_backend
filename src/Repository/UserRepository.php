@@ -32,4 +32,22 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->getEntityManager()->persist($user);
         $this->getEntityManager()->flush();
     }
+
+    /**
+     * Check if username is available (not taken by another user)
+     */
+    public function isUsernameAvailable(string $username, ?int $excludeUserId = null): bool
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->where('u.username = :username')
+            ->setParameter('username', $username);
+
+        if ($excludeUserId !== null) {
+            $qb->andWhere('u.id != :excludeUserId')
+               ->setParameter('excludeUserId', $excludeUserId);
+        }
+
+        return $qb->getQuery()->getSingleScalarResult() === 0;
+    }
 }

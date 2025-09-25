@@ -9,7 +9,9 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Put;
 use App\Controller\RegisterUserController;
+use App\Controller\UpdateUserController;
 use App\State\MeProvider;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -43,6 +45,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
             normalizationContext: ['groups' => ['user:list']],
             paginationEnabled: true,
             paginationItemsPerPage: 10
+        ),
+        new Put(
+            uriTemplate: "/users/{id}",
+            controller: UpdateUserController::class,
+            security: "is_granted('ROLE_ADMIN')",
+            securityMessage: "You need administrator privileges to update users."
         ),
         new Delete(
             security: "is_granted('ROLE_ADMIN')",
