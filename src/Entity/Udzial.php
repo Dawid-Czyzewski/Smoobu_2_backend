@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\UdzialRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
@@ -35,15 +36,17 @@ class Udzial
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['udzial:read', 'udzial:write', 'apartment:read'])]
+    #[MaxDepth(1)]
     private ?User $user = null;
 
     #[ORM\ManyToOne(targetEntity: Apartment::class)]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['udzial:read', 'udzial:write', 'user:list', 'user:details'])]
+    #[Groups(['udzial:read', 'udzial:write', 'user:list', 'user:details', 'user:me'])]
+    #[MaxDepth(1)]
     private ?Apartment $apartment = null;
 
     #[ORM\Column(type: 'decimal', precision: 5, scale: 2)]
-    #[Groups(['udzial:read', 'udzial:write', 'apartment:read', 'user:details', 'user:list'])]
+    #[Groups(['udzial:read', 'udzial:write', 'apartment:read', 'user:details', 'user:list', 'user:me'])]
     private ?string $procent = null;
 
     public function getId(): ?int

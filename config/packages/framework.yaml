@@ -7,6 +7,10 @@ framework:
 
     #esi: true
     #fragments: true
+    
+    serializer:
+        enabled: true
+        max_depth_handler: 'App\Serializer\MaxDepthHandler'
 
 when@test:
     framework:

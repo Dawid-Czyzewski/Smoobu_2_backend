@@ -7,10 +7,16 @@ api_platform:
             vary: ['Content-Type', 'Authorization', 'Origin']
         pagination_items_per_page: 50
         pagination_maximum_items_per_page: 100
+        normalization_context:
+            enable_max_depth: true
     enable_docs: true
     enable_swagger_ui: true
     enable_re_doc: true
     description: 'Smoobu 2.0 API'
+    eager_loading:
+        max_joins: 30
+        fetch_partial: true
+        force_eager: false
     formats:
         json:
             mime_types: ['application/json']

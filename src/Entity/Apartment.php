@@ -7,6 +7,7 @@ use App\Controller\CreateApartmentController;
 use App\Controller\UpdateApartmentController;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
@@ -18,7 +19,16 @@ use ApiPlatform\Metadata\GetCollection;
 #[ApiResource(
     operations: [
         new GetCollection(security: "is_granted('ROLE_ADMIN')"),
-        new Get(security: "is_granted('ROLE_ADMIN')"),
+        new Get(
+            uriTemplate: "/apartments/{id}",
+            security: "is_granted('ROLE_USER')",
+            normalizationContext: ['groups' => ['apartment:read', 'user:me']]
+        ),
+        new Get(
+            uriTemplate: "/admin/apartments/{id}",
+            security: "is_granted('ROLE_ADMIN')",
+            normalizationContext: ['groups' => ['apartment:read']]
+        ),
         new Put(
             controller: UpdateApartmentController::class,
             security: "is_granted('ROLE_ADMIN')",
@@ -39,19 +49,19 @@ class Apartment
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['apartment:read', 'user:details', 'user:list'])]
+    #[Groups(['apartment:read', 'user:details', 'user:list', 'user:me'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['apartment:read', 'apartment:write', 'user:list', 'user:details'])]
+    #[Groups(['apartment:read', 'apartment:write', 'user:list', 'user:details', 'user:me'])]
     private ?string $name = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    #[Groups(['apartment:read', 'apartment:write'])]
+    #[Groups(['apartment:read', 'apartment:write', 'user:me'])]
     private ?string $priceForClean = null;
 
     #[ORM\Column(length: 500, nullable: true)]
-    #[Groups(['apartment:read', 'apartment:write'])]
+    #[Groups(['apartment:read', 'apartment:write', 'user:me'])]
     private ?string $picture = null;
 
     #[ORM\Column(type: 'decimal', precision: 5, scale: 2)]
@@ -68,6 +78,7 @@ class Apartment
 
     #[ORM\OneToMany(mappedBy: 'apartment', targetEntity: Udzial::class, cascade: ['persist', 'remove'])]
     #[Groups(['apartment:read'])]
+    #[MaxDepth(1)]
     private $udzialy;
 
     public function __construct()

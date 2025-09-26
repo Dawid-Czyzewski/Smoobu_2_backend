@@ -16,6 +16,7 @@ use App\State\MeProvider;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
@@ -250,7 +251,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?InvoiceInfo $invoiceInfo = null;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Udzial::class, cascade: ['persist', 'remove'])]
-    #[Groups(['user:details', 'user:list'])]
+    #[Groups(['user:details', 'user:list', 'user:me'])]
+    #[MaxDepth(1)]
     private $udzialy;
 
     public function __construct()
