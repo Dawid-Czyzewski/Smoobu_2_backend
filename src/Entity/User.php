@@ -63,11 +63,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:me', 'user:list', 'user:details'])]
+    #[Groups(['user:me', 'user:list', 'user:details', 'apartment:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
-    #[Groups(['user:details'])]
+    #[Groups(['user:details', 'apartment:read'])]
     private ?string $username = null;
 
     /**
@@ -86,11 +86,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?\DateTimeImmutable $created_at = null;
 
     #[ORM\Column(length: 100)]
-    #[Groups(['user:me', 'user:list', 'user:details'])]
+    #[Groups(['user:me', 'user:list', 'user:details', 'apartment:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 150)]
-    #[Groups(['user:me', 'user:list', 'user:details'])]
+    #[Groups(['user:me', 'user:list', 'user:details', 'apartment:read'])]
     private ?string $surname = null;
 
     #[ORM\Column(length: 20, nullable: true)]
@@ -248,6 +248,41 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToOne(mappedBy: 'user', targetEntity: InvoiceInfo::class, cascade: ['persist', 'remove'])]
     #[Groups(['user:details'])]
     private ?InvoiceInfo $invoiceInfo = null;
+
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Udzial::class, cascade: ['persist', 'remove'])]
+    #[Groups(['user:details', 'user:list'])]
+    private $udzialy;
+
+    public function __construct()
+    {
+        $this->udzialy = new \Doctrine\Common\Collections\ArrayCollection();
+    }
+
+    public function getUdzialy()
+    {
+        return $this->udzialy;
+    }
+
+    public function addUdzial(Udzial $udzial): static
+    {
+        if (!$this->udzialy->contains($udzial)) {
+            $this->udzialy->add($udzial);
+            $udzial->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUdzial(Udzial $udzial): static
+    {
+        if ($this->udzialy->removeElement($udzial)) {
+            if ($udzial->getUser() === $this) {
+                $udzial->setUser(null);
+            }
+        }
+
+        return $this;
+    }
 
     public function getInvoiceInfo(): ?InvoiceInfo
     {

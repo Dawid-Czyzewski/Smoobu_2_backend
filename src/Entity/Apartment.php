@@ -39,11 +39,11 @@ class Apartment
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['apartment:read'])]
+    #[Groups(['apartment:read', 'user:details', 'user:list'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['apartment:read', 'apartment:write'])]
+    #[Groups(['apartment:read', 'apartment:write', 'user:list', 'user:details'])]
     private ?string $name = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
@@ -66,9 +66,14 @@ class Apartment
     #[Groups(['apartment:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
+    #[ORM\OneToMany(mappedBy: 'apartment', targetEntity: Udzial::class, cascade: ['persist', 'remove'])]
+    #[Groups(['apartment:read'])]
+    private $udzialy;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->udzialy = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
     public function getId(): ?int
@@ -144,6 +149,32 @@ class Apartment
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getUdzialy()
+    {
+        return $this->udzialy;
+    }
+
+    public function addUdzial(Udzial $udzial): static
+    {
+        if (!$this->udzialy->contains($udzial)) {
+            $this->udzialy->add($udzial);
+            $udzial->setApartment($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUdzial(Udzial $udzial): static
+    {
+        if ($this->udzialy->removeElement($udzial)) {
+            if ($udzial->getApartment() === $this) {
+                $udzial->setApartment(null);
+            }
+        }
 
         return $this;
     }
